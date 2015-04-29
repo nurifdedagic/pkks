@@ -1,0 +1,162 @@
+  /**
+   * Export rule base for use in MATLAB 
+   * Writing to *.FIS document
+   * 
+   */
+
+  public void exportToFIS() {
+	  
+    Enumeration enumVars = variableList.elements();
+    Enumeration enumRules = ruleList.elements();
+    ContinuousFuzzyRuleVariable outputVar=null;
+    String tempString;
+    int noOfRules, noOfVars;
+    
+    noOfVars = 0;
+    while (enumVars.hasMoreElements()) {
+    	FuzzyRuleVariable tempVar = (FuzzyRuleVariable) enumVars.nextElement();
+    	noOfVars+= 1;
+    }
+        
+    noOfRules = 0;
+    while (enumRules.hasMoreElements()) {
+    	noOfRules +=1;
+    	 FuzzyRule tempRule = (FuzzyRule) enumRules.nextElement();
+    }
+    
+    try {
+    	  FileWriter outFile = new FileWriter("Test.fis");
+    	  PrintWriter out = new PrintWriter(outFile);
+    	  
+    	  out.println("[System]");
+    	  out.println("Name='"+ name + "'");
+    	  out.println("Type='mamdani'");
+    	  out.println("Version=2.0");
+    	  
+    	  out.println("NumInputs="+(noOfVars-1));
+    	  out.println("NumOutputs=1");
+    	  out.println("NumRules="+(noOfRules-1));
+    	  
+    	  out.println("AndMethod='min'");
+    	  out.println("OrMethod='max'");
+    	  
+    	  if (correlationMethod== FuzzyDefs.PRODUCT) {
+    		  out.println("ImpMethod='prod'"); // ("PRODUCT");
+    		}else{
+    		  out.println("ImpMethod='min'"); // ("MINIMISE");
+    		}
+  		  if (inferenceMethod== FuzzyDefs.FUZZYADD) {
+  			out.println("AggMethod='sum'"); // "FUZZYADD";
+		  }else{
+			  out.println("AggMethod='max'"); // "MINMAX";
+		  }
+    	  if (defuzzifyMethod== FuzzyDefs.CENTROID) {
+    			out.println("DefuzzMethod='centroid'");  //"CENTROID";
+    	  }else{
+    			out.println("DefuzzMethod='mom'");  //"MAXHEIGHT";
+    	  }
+    	  out.println();
+    	  
+    	  noOfVars = 1;
+    	  Enumeration enumVars2 = variableList.elements();
+    	  while (enumVars2.hasMoreElements()) {  //  VARIABLES
+    	   FuzzyRuleVariable tempVar = (FuzzyRuleVariable) enumVars2.nextElement();
+    	   ContinuousFuzzyRuleVariable tempContVar = (ContinuousFuzzyRuleVariable)tempVar;
+    	   if (tempContVar.getVariableType() ==   FuzzyDefs.OUTPUT) {
+    	   	 outputVar = tempContVar;
+    	   }
+    	   else { // INPUT VARIABLES
+    	     out.println("[Input "+noOfVars+ "]");
+    	     out.println("[Input "+tempVar.getVariableNO() + "]");
+    	     out.println("Name='"+tempVar.getName() + "'");
+    	     out.println("Range=["+ tempContVar.getDiscourseLo()+ " " + 
+	  				tempContVar.getDiscourseHi()+ "]");
+    	     Enumeration enumSets = tempContVar.getFuzzySets().elements();
+    	     int noOfSets = tempContVar.getFuzzySets().size();
+    	     out.println("NumMFs="+noOfSets);
+    	     noOfSets = 1;
+    	     while (enumSets.hasMoreElements()) { // MFs
+    	  	FuzzySet tempSet = (FuzzySet) enumSets.nextElement();
+    	  	out.print("MF"+tempSet.getSetNo()+ "='" + tempSet.getSetName() + "'" ); 
+    	  	switch (tempSet.getSetType()) {
+    	  	  case FuzzyDefs.SHOULDER :
+    	  	    out.print(":'trapmf',[" + ((ShoulderFuzzySet)tempSet).getLeftPoint() + ", ");
+    	  	    out.println( ((ShoulderFuzzySet)tempSet).getRightPoint()+ "]") ;
+    	  	    break;
+    	  	  case FuzzyDefs.TRIANGLE :
+    	  	    out.print(":'trimf',[" + ((TriangleFuzzySet)tempSet).getLeftPoint() + ", ");
+    	  	    out.print( ((TriangleFuzzySet)tempSet).getCenterPoint()+ ", ") ;
+    	  	    out.println( ((TriangleFuzzySet)tempSet).getRightPoint()+ "]") ;	  			    break;
+    	  	  case FuzzyDefs.TRAPEZOID :
+    	  	    out.print(":'trapmf',[" + ((TrapezoidFuzzySet)tempSet).getLeftPoint() + ",");
+    	  	    out.print( ((TrapezoidFuzzySet)tempSet).getLeftCorePoint()+ ", ") ;
+    	  	    out.print( ((TrapezoidFuzzySet)tempSet).getRightCorePoint()+ ", ") ;
+    	  	    out.println( ((TrapezoidFuzzySet)tempSet).getRightPoint()+ "]") ;
+    	  	}
+    	  		
+    	  	noOfSets+= 1;
+    	  	} // MFs
+    	  	out.println();
+    	       noOfVars+= 1;
+    	    } // else
+    	  } // while  VARIABLES
+        if (outputVar != null) { // OUTPUT VARIABLE
+    	   out.println("[Output 1]");
+  	   out.println("Name='"+outputVar.getName() + "'");
+  	   out.println("Range=["+ outputVar.getDiscourseLo()+ " " + outputVar.getDiscourseHi()+
+ "]");
+  	   Enumeration enumSets = outputVar.getFuzzySets().elements();
+	   int noOfSets = outputVar.getFuzzySets().size();
+	   out.println("NumMFs="+noOfSets );
+	   noOfSets = 1;
+	   while (enumSets.hasMoreElements()) {// MFs
+	      FuzzySet tempSet = (FuzzySet) enumSets.nextElement();
+	      out.print("MF"+tempSet.getSetNo()+ "='" + tempSet.getSetName() + "'" ); 
+	      switch (tempSet.getSetType()) { 
+	  	  case FuzzyDefs.SHOULDER :
+	  	    out.print(":'trapmf',[" + ((ShoulderFuzzySet)tempSet).getLeftPoint() + ", ");
+	  	    out.println( ((ShoulderFuzzySet)tempSet).getRightPoint()+ "]") ;
+	  	    break;
+	  	  case FuzzyDefs.TRIANGLE :
+	  	    out.print(":'trimf',[" + ((TriangleFuzzySet)tempSet).getLeftPoint() + ", ");
+	  	    out.print( ((TriangleFuzzySet)tempSet).getCenterPoint()+ ", ") ;
+	  	    out.println( ((TriangleFuzzySet)tempSet).getRightPoint()+ "]") ;	  			    break;
+	  			
+	  	  case FuzzyDefs.TRAPEZOID :
+	  	    out.print(":'trapmf',[" + ((TrapezoidFuzzySet)tempSet).getLeftPoint() + ",");
+	  	    out.print( ((TrapezoidFuzzySet)tempSet).getLeftCorePoint()+ ", ") ;
+	  	    out.print( ((TrapezoidFuzzySet)tempSet).getRightCorePoint()+ ", ") ;
+	  		out.println( ((TrapezoidFuzzySet)tempSet).getRightPoint()+ "]") ;
+	  		}
+	  		noOfSets+= 1;
+	  	 }// MFs
+	  	out.println();
+    	} // OUTPUT VARIABLE
+  	out.println();
+  	  	
+  	out.println("[Rules]");
+  	enumRules = ruleList.elements(); //get Rules
+  		
+  	while (enumRules.hasMoreElements()) { // RULES
+  	   FuzzyRule tempRule = (FuzzyRule) enumRules.nextElement();
+  	   Vector clauses = tempRule.getAntecedents();
+  	   StringBuilder printLine = new StringBuilder();
+  	   for (int j = 0; j < (noOfVars-1); j++) 
+  			printLine.append("0 ");
+  		
+  	   for (int i = 0; i < clauses.size(); i++) { 
+// print Antecedents - indeks MF na poziciji INPUT varijable 
+  		FuzzyClause tempClause = (FuzzyClause)  (clauses.elementAt(i));
+  		String tempChars= ""+ tempClause.getRhs().getSetNo();
+  		int first = (tempClause.getLhs().getVariableNO()-1)*2;
+  		printLine.replace(first, first+1, tempChars);
+  	   }
+  	   out.print(printLine);
+  	   out.println(", "+ tempRule.getConsequent().getRhs().getSetNo() +" (1) : 1");	
+     } // RULES
+     out.close();
+    } catch (IOException e){
+      e.printStackTrace();
+    }
+  }
+
